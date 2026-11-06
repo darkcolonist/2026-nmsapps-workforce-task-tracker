@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2026 NMS Apps Workforce Burndown Tracker</title>
+  <title>loading document</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js CDN -->
@@ -26,64 +27,141 @@
     }
   </script>
 </head>
-<body class="bg-background text-slate-100 min-h-screen flex flex-col font-sans antialiased overflow-x-hidden selection:bg-brand/30">
+
+<body
+  class="bg-background text-slate-100 min-h-screen flex flex-col font-sans antialiased overflow-x-hidden selection:bg-brand/30">
 
   <!-- Slim Fixed Header Bar -->
-  <header class="fixed top-0 left-0 right-0 h-11 bg-surface/90 backdrop-blur border-b border-slate-800/80 z-30 px-3 sm:px-4 flex items-center justify-between shadow-sm">
+  <header
+    class="fixed top-0 left-0 right-0 h-11 bg-surface/90 backdrop-blur border-b border-slate-800/80 z-30 px-3 sm:px-4 flex items-center justify-between shadow-sm">
     <div class="flex items-center gap-2">
-      <div class="w-2.5 h-2.5 rounded-full bg-brand animate-pulse"></div>
-      <h1 class="text-xs sm:text-sm font-semibold tracking-wide text-white truncate max-w-[180px] sm:max-w-none">
-        Workforce Burndown
+      <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-brand animate-pulse"></div>
+      <h1 id="headerTitle"
+        class="text-xs sm:text-sm font-semibold tracking-wide text-white truncate max-w-[180px] sm:max-w-none">
+        loading document
       </h1>
     </div>
 
     <!-- Filter & Controls -->
     <div class="flex items-center gap-2">
       <div class="relative">
-        <select id="projectFilter" class="appearance-none bg-panel hover:bg-slate-700/80 transition-colors border border-slate-700/80 text-slate-200 text-xs rounded-md pl-2.5 pr-7 h-7 outline-none focus:border-brand cursor-pointer">
+        <select id="projectFilter"
+          class="appearance-none bg-panel hover:bg-slate-700/80 transition-colors border border-slate-700/80 text-slate-200 text-xs rounded-md pl-2.5 pr-7 h-7 outline-none focus:border-brand cursor-pointer">
           <option value="All Projects">All Projects</option>
         </select>
         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-slate-400">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
         </div>
       </div>
 
-      <button id="refreshBtn" onclick="loadData(true)" title="Fetch latest sheet data" class="h-7 w-7 flex items-center justify-center rounded-md bg-panel hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition">
-        <svg id="refreshIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      <button id="refreshBtn" onclick="loadData(true)" title="Fetch latest sheet data"
+        class="h-7 w-7 flex items-center justify-center rounded-md bg-panel hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition">
+        <svg id="refreshIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
       </button>
 
-      <button onclick="toggleModal(true)" title="History & Settings" class="h-7 w-7 flex items-center justify-center rounded-md bg-panel hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      <button onclick="toggleModal(true)" title="History & Settings"
+        class="h-7 w-7 flex items-center justify-center rounded-md bg-panel hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
       </button>
     </div>
   </header>
 
   <!-- Main Burndown Visualizer Area -->
   <main class="flex-1 w-full pt-11 pb-11 px-3 sm:px-6 flex flex-col justify-center items-center">
-    <div class="w-full max-w-7xl h-[calc(100vh-5.5rem)] min-h-[380px] bg-surface/50 border border-slate-800/80 rounded-xl p-3 sm:p-5 flex flex-col relative my-auto shadow-inner">
+    <div
+      class="w-full max-w-7xl h-[calc(100vh-5.5rem)] min-h-[380px] bg-surface/50 border border-slate-800/80 rounded-xl p-3 sm:p-5 flex flex-col relative my-auto shadow-inner">
       <div class="flex items-center justify-between pb-2 mb-1 border-b border-slate-800/60">
         <div class="flex items-center gap-2">
           <span class="text-xs uppercase tracking-wider font-semibold text-slate-400">Trajectory Graph</span>
-          <span id="activeProjectLabel" class="text-xs px-2 py-0.5 rounded bg-brand/10 text-brand font-medium">All Projects</span>
+          <span id="activeProjectLabel" class="text-xs px-2 py-0.5 rounded bg-brand/10 text-brand font-medium">All
+            Projects</span>
         </div>
         <div class="flex items-center gap-4 text-[11px] text-slate-400">
-          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-1 rounded-full bg-blue-500"></span>Remaining Tasks</span>
-          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-1 rounded-full bg-emerald-500"></span>Cumulative Done</span>
+          <span class="inline-flex items-center gap-1.5"><span
+              class="w-2.5 h-1 rounded-full bg-blue-500"></span>Remaining Tasks</span>
+          <span class="inline-flex items-center gap-1.5"><span
+              class="w-2.5 h-1 rounded-full bg-emerald-500"></span>Cumulative Done</span>
         </div>
       </div>
-      <div class="relative flex-1 w-full mt-2">
+      <div id="chartContainer" class="relative flex-1 w-full mt-2 transition-opacity duration-200">
         <canvas id="burndownChart"></canvas>
+      </div>
+
+      <!-- Cute Failover State (hidden by default) -->
+      <div id="failoverState"
+        class="hidden absolute inset-0 bg-surface/90 backdrop-blur-md rounded-xl flex-col items-center justify-center p-6 text-center z-20 animate-in fade-in zoom-in-95 duration-200">
+        <div class="relative w-28 h-28 mx-auto mb-2 flex items-center justify-center select-none">
+          <div class="absolute inset-0 bg-rose-500/10 rounded-full blur-2xl animate-pulse"></div>
+          <svg class="w-24 h-24 text-slate-300 drop-shadow-md" viewBox="0 0 100 100" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <!-- Monitor Body -->
+            <rect x="18" y="22" width="64" height="48" rx="12" fill="#1e293b" stroke="#475569" stroke-width="2.5" />
+            <!-- Screen Area -->
+            <rect x="24" y="28" width="52" height="36" rx="8" fill="#0f172a" />
+            <!-- Little Antenna -->
+            <path d="M50 22V12" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" />
+            <circle cx="50" cy="10" r="4" fill="#f43f5e" />
+            <!-- Monitor Stand -->
+            <path d="M42 70L38 78H62L58 70" fill="#334155" stroke="#475569" stroke-width="2" stroke-linejoin="round" />
+            <!-- Kawaii Shy Eyes -->
+            <circle cx="40" cy="44" r="3" fill="#94a3b8" />
+            <circle cx="60" cy="44" r="3" fill="#94a3b8" />
+            <circle cx="41" cy="43" r="1.2" fill="#ffffff" />
+            <circle cx="61" cy="43" r="1.2" fill="#ffffff" />
+            <!-- Cute Pink Blush Cheeks -->
+            <ellipse cx="34" cy="50" rx="3.5" ry="2" fill="#f472b6" fill-opacity="0.65" />
+            <ellipse cx="66" cy="50" rx="3.5" ry="2" fill="#f472b6" fill-opacity="0.65" />
+            <!-- Wavy Sad Mouth -->
+            <path d="M46 52Q50 48.5 54 52" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" fill="none" />
+            <!-- Disconnected Signal Dots -->
+            <path d="M68 34C70 32 73 32 75 34" stroke="#f43f5e" stroke-width="2" stroke-linecap="round"
+              stroke-dasharray="2 2" />
+            <circle cx="76" cy="31" r="1.5" fill="#f43f5e" />
+          </svg>
+        </div>
+        <h3 class="text-base sm:text-lg font-bold text-white mb-1.5 tracking-wide">
+          sorry, the datasource is unavailable
+        </h3>
+        <p class="text-xs text-slate-400 max-w-sm mb-5 leading-relaxed">
+          The spreadsheet feed couldn't be reached right now. It might be taking a quick nap, experiencing a connection
+          hiccup, or offline.
+        </p>
+        <div class="flex items-center gap-3">
+          <button onclick="loadData(true)"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand hover:bg-blue-600 text-white text-xs font-semibold shadow-md shadow-brand/20 transition active:scale-95 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Retry Connection
+          </button>
+          <button onclick="toggleModal(true)"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-panel hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700/80 transition cursor-pointer">
+            Check Settings
+          </button>
+        </div>
       </div>
     </div>
   </main>
 
   <!-- Slim Fixed Footer Ribbon -->
-  <footer class="fixed bottom-0 left-0 right-0 h-11 bg-surface/95 backdrop-blur border-t border-slate-800/80 z-30 px-3 sm:px-4 flex items-center justify-between text-xs">
+  <footer
+    class="fixed bottom-0 left-0 right-0 h-11 bg-surface/95 backdrop-blur border-t border-slate-800/80 z-30 px-3 sm:px-4 flex items-center justify-between text-xs">
     <div class="flex items-center gap-3 sm:gap-6 overflow-x-auto py-1 no-scrollbar text-slate-300">
       <div class="flex items-center gap-1.5 shrink-0">
         <span class="text-slate-400 font-medium">Remaining:</span>
         <span id="kpiRemaining" class="font-bold text-white text-sm">--</span>
-        <span id="kpiDelta" class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">--</span>
+        <span id="kpiDelta"
+          class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">--</span>
       </div>
 
       <div class="hidden sm:inline-block w-px h-3 bg-slate-700/60 shrink-0"></div>
@@ -109,42 +187,56 @@
     </div>
 
     <div class="shrink-0 pl-3 text-[11px] text-slate-400 font-mono flex items-center gap-1.5">
-      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+      <span id="footerStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
       <span id="lastUpdatedLabel">--</span>
     </div>
   </footer>
 
   <!-- Gear Settings & History Log Modal -->
-  <div id="settingsModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-6 md:p-8 transition-opacity duration-200">
-    <div class="bg-surface border border-slate-700/90 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-      
+  <div id="settingsModal"
+    class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-6 md:p-8 transition-opacity duration-200">
+    <div
+      class="bg-surface border border-slate-700/90 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+
       <!-- Modal Header -->
       <div class="h-12 px-4 sm:px-6 border-b border-slate-800 flex items-center justify-between shrink-0 bg-panel/40">
         <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
           <h2 class="text-sm font-semibold text-white">Daily Snapshots History & Data Log</h2>
         </div>
-        <button onclick="toggleModal(false)" class="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <button onclick="toggleModal(false)"
+          class="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
 
       <!-- Modal Body -->
       <div class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
         <div>
-          <label class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">CSV Data Endpoint</label>
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">CSV Data
+            Endpoint</label>
           <div class="flex items-center gap-2">
-            <input type="text" id="csvUrlInput" class="w-full text-xs font-mono bg-panel border border-slate-700 rounded-lg px-3 py-1.5 text-slate-300 outline-none focus:border-brand" readonly />
-            <button onclick="copyCsvUrl()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-panel hover:bg-slate-700 text-slate-200 border border-slate-700 transition shrink-0">
+            <input type="text" id="csvUrlInput"
+              class="w-full text-xs font-mono bg-panel border border-slate-700 rounded-lg px-3 py-1.5 text-slate-300 outline-none focus:border-brand"
+              readonly />
+            <button onclick="copyCsvUrl()"
+              class="px-3 py-1.5 text-xs font-medium rounded-lg bg-panel hover:bg-slate-700 text-slate-200 border border-slate-700 transition shrink-0">
               Copy
             </button>
           </div>
         </div>
 
-        <div class="flex flex-col flex-1 min-h-[160px] max-h-[52vh] rounded-lg border border-slate-800 overflow-hidden bg-background/50">
+        <div
+          class="flex flex-col flex-1 min-h-[160px] max-h-[52vh] rounded-lg border border-slate-800 overflow-hidden bg-background/50">
           <div class="overflow-auto flex-1">
             <table class="w-full text-left text-xs text-slate-300 min-w-[540px]">
-              <thead class="text-[11px] uppercase bg-slate-900/90 text-slate-400 sticky top-0 border-b border-slate-800 z-10 backdrop-blur">
+              <thead
+                class="text-[11px] uppercase bg-slate-900/90 text-slate-400 sticky top-0 border-b border-slate-800 z-10 backdrop-blur">
                 <tr>
                   <th class="px-4 py-2.5">Date</th>
                   <th class="px-4 py-2.5">Project</th>
@@ -157,7 +249,8 @@
               </thead>
               <tbody id="snapshotTableBody" class="divide-y divide-slate-800/70 font-mono text-[11px]">
                 <tr>
-                  <td colspan="7" class="px-4 py-6 text-center text-slate-500 font-sans">Connecting to data source...</td>
+                  <td colspan="7" class="px-4 py-6 text-center text-slate-500 font-sans">Connecting to data source...
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -166,9 +259,11 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="h-11 px-4 sm:px-6 border-t border-slate-800 flex items-center justify-between shrink-0 bg-panel/30 text-xs text-slate-400">
+      <div
+        class="h-11 px-4 sm:px-6 border-t border-slate-800 flex items-center justify-between shrink-0 bg-panel/30 text-xs text-slate-400">
         <span id="recordCountLabel">0 records loaded</span>
-        <button onclick="toggleModal(false)" class="px-3 py-1 rounded-md bg-panel hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+        <button onclick="toggleModal(false)"
+          class="px-3 py-1 rounded-md bg-panel hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
           Close
         </button>
       </div>
@@ -177,7 +272,7 @@
 
   <script>
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSBlJqbU19NsAtxnZhHVZoM39A5aYpoHnzIOjlX3qbFx70eYFeCwv-1izDhJye6p696ZAsU4FNf6u29/pub?gid=1001&single=true&output=csv";
-    
+
     let rawSnapshots = [];
     let burndownChart = null;
 
@@ -323,12 +418,12 @@
     function populateDropdownAndTable() {
       const dropdown = document.getElementById('projectFilter');
       const uniqueProjects = Array.from(new Set(rawSnapshots.map(s => s.project))).filter(Boolean);
-      
+
       const currentSelected = dropdown.value;
-      dropdown.innerHTML = uniqueProjects.map(proj => 
+      dropdown.innerHTML = uniqueProjects.map(proj =>
         `<option value="${proj}">${proj}</option>`
       ).join('');
-      
+
       if (uniqueProjects.includes('All Projects')) {
         dropdown.value = currentSelected && uniqueProjects.includes(currentSelected) ? currentSelected : 'All Projects';
       }
@@ -349,58 +444,165 @@
       document.getElementById('recordCountLabel').innerText = `${rawSnapshots.length} snapshot rows parsed`;
     }
 
-    function loadData(animate = false) {
+    function setFailoverState(isUnavailable) {
+      const failoverEl = document.getElementById('failoverState');
+      const chartContainer = document.getElementById('chartContainer');
+      const statusDot = document.getElementById('statusDot');
+      const footerStatusDot = document.getElementById('footerStatusDot');
+      const headerTitle = document.getElementById('headerTitle');
+      const lastUpdatedLabel = document.getElementById('lastUpdatedLabel');
+
+      if (isUnavailable) {
+        if (failoverEl) {
+          failoverEl.classList.remove('hidden');
+          failoverEl.classList.add('flex');
+        }
+        if (chartContainer) {
+          chartContainer.classList.add('opacity-10', 'pointer-events-none');
+        }
+        if (statusDot) {
+          statusDot.className = "w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shadow-rose-500/50";
+        }
+        if (footerStatusDot) {
+          footerStatusDot.className = "w-1.5 h-1.5 rounded-full bg-rose-500";
+        }
+        if (headerTitle) {
+          headerTitle.textContent = "sorry, the datasource is unavailable";
+        }
+        document.title = "sorry, the datasource is unavailable";
+        if (lastUpdatedLabel) {
+          lastUpdatedLabel.textContent = "Unavailable";
+        }
+
+        const tbody = document.getElementById('snapshotTableBody');
+        if (tbody && (!rawSnapshots || rawSnapshots.length === 0)) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" class="px-4 py-8 text-center text-slate-400 font-sans">
+                <div class="flex flex-col items-center justify-center gap-1">
+                  <span class="text-rose-400 font-medium">sorry, the datasource is unavailable</span>
+                  <span class="text-[11px] text-slate-500">Please check internet connection or Google Sheet publication settings.</span>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+      } else {
+        if (failoverEl) {
+          failoverEl.classList.add('hidden');
+          failoverEl.classList.remove('flex');
+        }
+        if (chartContainer) {
+          chartContainer.classList.remove('opacity-10', 'pointer-events-none');
+        }
+        if (statusDot) {
+          statusDot.className = "w-2.5 h-2.5 rounded-full bg-brand animate-pulse";
+        }
+        if (footerStatusDot) {
+          footerStatusDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-500";
+        }
+      }
+    }
+
+    async function loadData(animate = false) {
       const refreshIcon = document.getElementById('refreshIcon');
       if (animate && refreshIcon) refreshIcon.classList.add('animate-spin');
 
       const fetchUrl = `${CSV_URL}&_ts=${Date.now()}`;
 
-      Papa.parse(fetchUrl, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+      try {
+        const response = await fetch(fetchUrl);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-          if (results.data && results.data.length > 0) {
-            rawSnapshots = results.data.map(row => {
-              const findKey = (candidates) => {
-                const lowerMap = {};
-                Object.keys(row).forEach(k => lowerMap[k.trim().toLowerCase()] = row[k]);
-                for (const c of candidates) {
-                  if (lowerMap[c.toLowerCase()] !== undefined) return lowerMap[c.toLowerCase()];
-                }
-                return "";
-              };
-
-              return {
-                date: String(findKey(['Date'])).trim(),
-                project: String(findKey(['Project'])).trim(),
-                total: Number(findKey(['Total Tasks', 'Total'])) || 0,
-                completed: Number(findKey(['Completed Tasks', 'Completed'])) || 0,
-                remaining: Number(findKey(['Remaining Tasks', 'Remaining'])) || 0,
-                velocity: Number(findKey(['Velocity (Today)', 'Velocity'])) || 0,
-                lastUpdated: String(findKey(['Last Updated', 'Updated At', 'Timestamp'])).trim()
-              };
-            }).filter(s => s.date && s.project);
-
-            populateDropdownAndTable();
-            renderView();
+        // Extract spreadsheet title from Content-Disposition header
+        const disposition = response.headers.get('content-disposition');
+        let extractedTitle = null;
+        if (disposition) {
+          let filename = null;
+          const utf8Match = disposition.match(/filename\*=UTF-8''([^;\r\n]+)/i);
+          if (utf8Match && utf8Match[1]) {
+            try {
+              filename = decodeURIComponent(utf8Match[1].trim().replace(/^["']|["']$/g, ''));
+            } catch (e) {
+              console.warn("Could not decode UTF-8 filename:", e);
+            }
           }
-        },
-        error: function(err) {
-          if (refreshIcon) refreshIcon.classList.remove('animate-spin');
-          console.error("CSV loading error:", err);
+          if (!filename) {
+            const stdMatch = disposition.match(/filename=["']?([^"';\r\n]+)["']?/i);
+            if (stdMatch && stdMatch[1]) {
+              filename = stdMatch[1].trim();
+            }
+          }
+          if (filename) {
+            const rawName = filename.replace(/\.csv$/i, '').trim();
+            const lastDash = rawName.lastIndexOf(' - ');
+            extractedTitle = (lastDash !== -1 ? rawName.substring(0, lastDash).trim() : rawName) || rawName;
+          }
         }
-      });
+
+        const csvText = await response.text();
+        const results = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true
+        });
+
+        if (!results.data || results.data.length === 0) {
+          throw new Error("No data returned from datasource");
+        }
+
+        const parsed = results.data.map(row => {
+          const findKey = (candidates) => {
+            const lowerMap = {};
+            Object.keys(row).forEach(k => lowerMap[k.trim().toLowerCase()] = row[k]);
+            for (const c of candidates) {
+              if (lowerMap[c.toLowerCase()] !== undefined) return lowerMap[c.toLowerCase()];
+            }
+            return "";
+          };
+
+          return {
+            date: String(findKey(['Date'])).trim(),
+            project: String(findKey(['Project'])).trim(),
+            total: Number(findKey(['Total Tasks', 'Total'])) || 0,
+            completed: Number(findKey(['Completed Tasks', 'Completed'])) || 0,
+            remaining: Number(findKey(['Remaining Tasks', 'Remaining'])) || 0,
+            velocity: Number(findKey(['Velocity (Today)', 'Velocity'])) || 0,
+            lastUpdated: String(findKey(['Last Updated', 'Updated At', 'Timestamp'])).trim()
+          };
+        }).filter(s => s.date && s.project);
+
+        if (parsed.length === 0) {
+          throw new Error("No valid snapshot records parsed from datasource");
+        }
+
+        rawSnapshots = parsed;
+
+        // Datasource loaded successfully - clear failover state
+        setFailoverState(false);
+
+        if (extractedTitle) {
+          document.title = extractedTitle;
+          const headerEl = document.getElementById('headerTitle');
+          if (headerEl) headerEl.textContent = extractedTitle;
+        }
+
+        populateDropdownAndTable();
+        renderView();
+      } catch (err) {
+        console.error("CSV loading error:", err);
+        setFailoverState(true);
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+      }
     }
 
     document.getElementById('projectFilter').addEventListener('change', renderView);
 
-    window.onload = function() {
+    window.onload = function () {
       initChart();
       loadData();
     };
   </script>
 </body>
+
 </html>
