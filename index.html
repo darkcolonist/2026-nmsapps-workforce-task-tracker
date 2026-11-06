@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2026 NMS Apps Workforce Burndown Tracker</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- PapaParse CDN for CSV ingestion -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: '#3b82f6',
+            surface: '#111827',
+            panel: '#1f2937',
+            background: '#090d16'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-slate-100 min-h-screen flex flex-col font-sans antialiased overflow-x-hidden selection:bg-brand/30">
+
+  <!-- Slim Fixed Header Bar -->
+  <header class="fixed top-0 left-0 right-0 h-11 bg-surface/90 backdrop-blur border-b border-slate-800/80 z-30 px-3 sm:px-4 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-2">
+      <div class="w-2.5 h-2.5 rounded-full bg-brand animate-pulse"></div>
+      <h1 class="text-xs sm:text-sm font-semibold tracking-wide text-white truncate max-w-[180px] sm:max-w-none">
+        Workforce Burndown
+      </h1>
+    </div>
+
+    <!-- Filter & Controls -->
+    <div class="flex items-center gap-2">
+      <div class="relative">
+        <select id="projectFilter" class="appearance-none bg-panel hover:bg-slate-700/80 transition-colors border border-slate-700/80 text-slate-200 text-xs rounded-md pl-2.5 pr-7 h-7 outline-none focus:border-brand cursor-pointer">
+          <option value="All Projects">All Projects</option>
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-slate-400">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </div>
+
+      <button id="refreshBtn" onclick="loadData(true)" title="Fetch latest sheet data" class="h-7 w-7 flex items-center justify-center rounded-md bg-panel hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition">
+        <svg id="refreshIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      </button>
+
+      <button onclick="toggleModal(true)" title="History & Settings" class="h-7 w-7 flex items-center justify-center rounded-md bg-panel hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Burndown Visualizer Area -->
+  <main class="flex-1 w-full pt-11 pb-11 px-3 sm:px-6 flex flex-col justify-center items-center">
+    <div class="w-full max-w-7xl h-[calc(100vh-5.5rem)] min-h-[380px] bg-surface/50 border border-slate-800/80 rounded-xl p-3 sm:p-5 flex flex-col relative my-auto shadow-inner">
+      <div class="flex items-center justify-between pb-2 mb-1 border-b border-slate-800/60">
+        <div class="flex items-center gap-2">
+          <span class="text-xs uppercase tracking-wider font-semibold text-slate-400">Trajectory Graph</span>
+          <span id="activeProjectLabel" class="text-xs px-2 py-0.5 rounded bg-brand/10 text-brand font-medium">All Projects</span>
+        </div>
+        <div class="flex items-center gap-4 text-[11px] text-slate-400">
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-1 rounded-full bg-blue-500"></span>Remaining Tasks</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-1 rounded-full bg-emerald-500"></span>Cumulative Done</span>
+        </div>
+      </div>
+      <div class="relative flex-1 w-full mt-2">
+        <canvas id="burndownChart"></canvas>
+      </div>
+    </div>
+  </main>
+
+  <!-- Slim Fixed Footer Ribbon -->
+  <footer class="fixed bottom-0 left-0 right-0 h-11 bg-surface/95 backdrop-blur border-t border-slate-800/80 z-30 px-3 sm:px-4 flex items-center justify-between text-xs">
+    <div class="flex items-center gap-3 sm:gap-6 overflow-x-auto py-1 no-scrollbar text-slate-300">
+      <div class="flex items-center gap-1.5 shrink-0">
+        <span class="text-slate-400 font-medium">Remaining:</span>
+        <span id="kpiRemaining" class="font-bold text-white text-sm">--</span>
+        <span id="kpiDelta" class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">--</span>
+      </div>
+
+      <div class="hidden sm:inline-block w-px h-3 bg-slate-700/60 shrink-0"></div>
+
+      <div class="flex items-center gap-1.5 shrink-0">
+        <span class="text-slate-400 font-medium">Done:</span>
+        <span id="kpiCompleted" class="font-bold text-emerald-400 text-sm">--</span>
+      </div>
+
+      <div class="hidden sm:inline-block w-px h-3 bg-slate-700/60 shrink-0"></div>
+
+      <div class="flex items-center gap-1.5 shrink-0">
+        <span class="text-slate-400 font-medium">Scope:</span>
+        <span id="kpiTotal" class="font-bold text-slate-200 text-sm">--</span>
+      </div>
+
+      <div class="hidden sm:inline-block w-px h-3 bg-slate-700/60 shrink-0"></div>
+
+      <div class="flex items-center gap-1.5 shrink-0">
+        <span class="text-slate-400 font-medium">Velocity Today:</span>
+        <span id="kpiVelocity" class="font-bold text-blue-400 text-sm">--</span>
+      </div>
+    </div>
+
+    <div class="shrink-0 pl-3 text-[11px] text-slate-400 font-mono flex items-center gap-1.5">
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+      <span id="lastUpdatedLabel">--</span>
+    </div>
+  </footer>
+
+  <!-- Gear Settings & History Log Modal -->
+  <div id="settingsModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-6 md:p-8 transition-opacity duration-200">
+    <div class="bg-surface border border-slate-700/90 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="h-12 px-4 sm:px-6 border-b border-slate-800 flex items-center justify-between shrink-0 bg-panel/40">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <h2 class="text-sm font-semibold text-white">Daily Snapshots History & Data Log</h2>
+        </div>
+        <button onclick="toggleModal(false)" class="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
+        <div>
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">CSV Data Endpoint</label>
+          <div class="flex items-center gap-2">
+            <input type="text" id="csvUrlInput" class="w-full text-xs font-mono bg-panel border border-slate-700 rounded-lg px-3 py-1.5 text-slate-300 outline-none focus:border-brand" readonly />
+            <button onclick="copyCsvUrl()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-panel hover:bg-slate-700 text-slate-200 border border-slate-700 transition shrink-0">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col flex-1 min-h-[160px] max-h-[52vh] rounded-lg border border-slate-800 overflow-hidden bg-background/50">
+          <div class="overflow-auto flex-1">
+            <table class="w-full text-left text-xs text-slate-300 min-w-[540px]">
+              <thead class="text-[11px] uppercase bg-slate-900/90 text-slate-400 sticky top-0 border-b border-slate-800 z-10 backdrop-blur">
+                <tr>
+                  <th class="px-4 py-2.5">Date</th>
+                  <th class="px-4 py-2.5">Project</th>
+                  <th class="px-4 py-2.5">Remaining</th>
+                  <th class="px-4 py-2.5">Completed</th>
+                  <th class="px-4 py-2.5">Total Scope</th>
+                  <th class="px-4 py-2.5">Velocity</th>
+                  <th class="px-4 py-2.5">Last Updated</th>
+                </tr>
+              </thead>
+              <tbody id="snapshotTableBody" class="divide-y divide-slate-800/70 font-mono text-[11px]">
+                <tr>
+                  <td colspan="7" class="px-4 py-6 text-center text-slate-500 font-sans">Connecting to data source...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="h-11 px-4 sm:px-6 border-t border-slate-800 flex items-center justify-between shrink-0 bg-panel/30 text-xs text-slate-400">
+        <span id="recordCountLabel">0 records loaded</span>
+        <button onclick="toggleModal(false)" class="px-3 py-1 rounded-md bg-panel hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSBlJqbU19NsAtxnZhHVZoM39A5aYpoHnzIOjlX3qbFx70eYFeCwv-1izDhJye6p696ZAsU4FNf6u29/pub?gid=1001&single=true&output=csv";
+    
+    let rawSnapshots = [];
+    let burndownChart = null;
+
+    document.getElementById('csvUrlInput').value = CSV_URL;
+
+    function toggleModal(show) {
+      const modal = document.getElementById('settingsModal');
+      if (show) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      } else {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function copyCsvUrl() {
+      navigator.clipboard.writeText(CSV_URL);
+      alert('CSV URL copied to clipboard');
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('burndownChart').getContext('2d');
+      burndownChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Remaining Tasks',
+              data: [],
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.12)',
+              borderWidth: 2.5,
+              fill: true,
+              tension: 0.25,
+              pointRadius: 4,
+              pointBackgroundColor: '#60a5fa',
+              pointHoverRadius: 6,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Completed Tasks',
+              data: [],
+              borderColor: '#10b981',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              borderDash: [4, 4],
+              pointRadius: 3,
+              pointBackgroundColor: '#34d399',
+              pointHoverRadius: 5,
+              yAxisID: 'y'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#111827',
+              borderColor: '#374151',
+              borderWidth: 1,
+              padding: 10,
+              titleColor: '#f9fafb',
+              bodyColor: '#e5e7eb',
+              boxPadding: 4
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.04)' },
+              ticks: { color: '#64748b', font: { size: 11 } }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b', font: { size: 11 }, precision: 0 }
+            }
+          }
+        }
+      });
+    }
+
+    function renderView() {
+      const selectedProject = document.getElementById('projectFilter').value;
+      document.getElementById('activeProjectLabel').innerText = selectedProject;
+
+      const filtered = rawSnapshots
+        .filter(s => s.project === selectedProject)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      if (filtered.length === 0) {
+        document.getElementById('kpiRemaining').innerText = "0";
+        document.getElementById('kpiCompleted').innerText = "0";
+        document.getElementById('kpiTotal').innerText = "0";
+        document.getElementById('kpiVelocity').innerText = "0";
+        document.getElementById('kpiDelta').innerText = "No data";
+        document.getElementById('lastUpdatedLabel').innerText = "Empty";
+        burndownChart.data.labels = [];
+        burndownChart.data.datasets[0].data = [];
+        burndownChart.data.datasets[1].data = [];
+        burndownChart.update();
+        return;
+      }
+
+      const latest = filtered[filtered.length - 1];
+      const previous = filtered.length > 1 ? filtered[filtered.length - 2] : null;
+
+      document.getElementById('kpiRemaining').innerText = latest.remaining;
+      document.getElementById('kpiCompleted').innerText = latest.completed;
+      document.getElementById('kpiTotal').innerText = latest.total;
+      document.getElementById('kpiVelocity').innerText = latest.velocity;
+
+      const deltaEl = document.getElementById('kpiDelta');
+      if (previous) {
+        const diff = latest.remaining - previous.remaining;
+        if (diff < 0) {
+          deltaEl.innerText = `${diff} vs yesterday`;
+          deltaEl.className = 'text-[10px] font-semibold px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/80';
+        } else if (diff > 0) {
+          deltaEl.innerText = `+${diff} scope added`;
+          deltaEl.className = 'text-[10px] font-semibold px-1.5 py-0.2 rounded bg-rose-950/80 text-rose-400 border border-rose-800/80';
+        } else {
+          deltaEl.innerText = '0 vs yesterday';
+          deltaEl.className = 'text-[10px] font-medium px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700/60';
+        }
+      } else {
+        deltaEl.innerText = 'Day 1';
+        deltaEl.className = 'text-[10px] font-medium px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700/60';
+      }
+
+      document.getElementById('lastUpdatedLabel').innerText = latest.lastUpdated ? (latest.lastUpdated.split(' ')[1] || latest.lastUpdated) : latest.date;
+
+      burndownChart.data.labels = filtered.map(s => s.date);
+      burndownChart.data.datasets[0].data = filtered.map(s => s.remaining);
+      burndownChart.data.datasets[1].data = filtered.map(s => s.completed);
+      burndownChart.update();
+    }
+
+    function populateDropdownAndTable() {
+      const dropdown = document.getElementById('projectFilter');
+      const uniqueProjects = Array.from(new Set(rawSnapshots.map(s => s.project))).filter(Boolean);
+      
+      const currentSelected = dropdown.value;
+      dropdown.innerHTML = uniqueProjects.map(proj => 
+        `<option value="${proj}">${proj}</option>`
+      ).join('');
+      
+      if (uniqueProjects.includes('All Projects')) {
+        dropdown.value = currentSelected && uniqueProjects.includes(currentSelected) ? currentSelected : 'All Projects';
+      }
+
+      const tbody = document.getElementById('snapshotTableBody');
+      tbody.innerHTML = rawSnapshots.slice().reverse().map(row => `
+        <tr class="hover:bg-slate-800/40 transition-colors">
+          <td class="px-4 py-2 font-medium text-slate-200">${row.date}</td>
+          <td class="px-4 py-2 font-sans font-medium text-white">${row.project}</td>
+          <td class="px-4 py-2 font-bold text-blue-400">${row.remaining}</td>
+          <td class="px-4 py-2 text-emerald-400">${row.completed}</td>
+          <td class="px-4 py-2 text-slate-300">${row.total}</td>
+          <td class="px-4 py-2 text-slate-400">${row.velocity}</td>
+          <td class="px-4 py-2 text-slate-500">${row.lastUpdated || '--'}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('recordCountLabel').innerText = `${rawSnapshots.length} snapshot rows parsed`;
+    }
+
+    function loadData(animate = false) {
+      const refreshIcon = document.getElementById('refreshIcon');
+      if (animate && refreshIcon) refreshIcon.classList.add('animate-spin');
+
+      const fetchUrl = `${CSV_URL}&_ts=${Date.now()}`;
+
+      Papa.parse(fetchUrl, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+
+          if (results.data && results.data.length > 0) {
+            rawSnapshots = results.data.map(row => {
+              const findKey = (candidates) => {
+                const lowerMap = {};
+                Object.keys(row).forEach(k => lowerMap[k.trim().toLowerCase()] = row[k]);
+                for (const c of candidates) {
+                  if (lowerMap[c.toLowerCase()] !== undefined) return lowerMap[c.toLowerCase()];
+                }
+                return "";
+              };
+
+              return {
+                date: String(findKey(['Date'])).trim(),
+                project: String(findKey(['Project'])).trim(),
+                total: Number(findKey(['Total Tasks', 'Total'])) || 0,
+                completed: Number(findKey(['Completed Tasks', 'Completed'])) || 0,
+                remaining: Number(findKey(['Remaining Tasks', 'Remaining'])) || 0,
+                velocity: Number(findKey(['Velocity (Today)', 'Velocity'])) || 0,
+                lastUpdated: String(findKey(['Last Updated', 'Updated At', 'Timestamp'])).trim()
+              };
+            }).filter(s => s.date && s.project);
+
+            populateDropdownAndTable();
+            renderView();
+          }
+        },
+        error: function(err) {
+          if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+          console.error("CSV loading error:", err);
+        }
+      });
+    }
+
+    document.getElementById('projectFilter').addEventListener('change', renderView);
+
+    window.onload = function() {
+      initChart();
+      loadData();
+    };
+  </script>
+</body>
+</html>
