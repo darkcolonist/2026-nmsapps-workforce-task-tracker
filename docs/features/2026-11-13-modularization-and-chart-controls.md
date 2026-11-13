@@ -13,7 +13,8 @@ Refactored the application from a single monolithic `index.html` into ES modules
 - `js/app.js` — Application state, event bindings, and `renderView()` orchestration.
 
 ## Features
-- **Date Range Slider (`#dateStartSlider`, `#dateEndSlider`)**: Filters the visible date window on the chart and KPIs.
+- **Single-Track Dual-Thumb Date Slider (`#dateStartSlider`, `#dateEndSlider`, `#sliderTrackFill`)**: Overlapping range thumbs on a unified track with a highlighted active bar that can also be dragged to pan the current date window across history.
+- **Quick Window Presets & Custom Calendar Datepicker (`7D`, `14D`, `30D`, `All`, `#customDateBtn`)**: 1-click preset pills plus a `Custom` button that opens a calendar datepicker popover (`#customDatePopover`) with bounded `Start Date` and `End Date` calendar inputs.
 - **30-Day Default Window**: Defaults to the last 30 available days (`MAX_DEFAULT_DAYS = 30`), or all available days when fewer than 30 exist.
 - **Weekend Toggle (`#weekendToggle`)**: Shows or hides Saturday and Sunday snapshots.
 - **Weekday Axis & Full-Date Tooltip**: X-axis ticks display weekday names (e.g., `Monday`), while hovering displays the full date (e.g., `Friday, November 13, 2026`).
